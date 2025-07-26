@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from io import BytesIO
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
 from openpyxl import Workbook
 import base64
@@ -13,7 +12,7 @@ app = Flask(__name__)
 @app.route('/api/generar', methods=['POST'])
 def generar():
     try:
-        data = request.json
+        data = request.json or {}
         cliente = data.get('cliente', 'Cliente')
         cuit_cliente = data.get('cuitCliente', '')
         fecha = data.get('fecha', '')
@@ -27,7 +26,7 @@ def generar():
             "email": "olavarria@reconstructoraunion.com"
         }
 
-        # Excel
+        # Generar Excel
         wb = Workbook()
         ws = wb.active
         ws.title = "Presupuesto"
@@ -42,9 +41,12 @@ def generar():
 
         total = 0
         for item in items:
-            cantidad = int(item["cantidad"])
-            descripcion = item["descripcion"]
-            precio = float(item["precio"])
+            try:
+                cantidad = int(item.get("cantidad", 0))
+                descripcion = str(item.get("descripcion", ""))
+                precio = float(item.get("precio", 0))
+            except:
+                cantidad, descripcion, precio = 0, "", 0
             precio_total = cantidad * precio
             total += precio_total
             ws.append([cantidad, descripcion, f"${precio:,.2f}", f"${precio_total:,.2f}"])
@@ -58,26 +60,32 @@ def generar():
         wb.save(excel_buffer)
         excel_base64 = base64.b64encode(excel_buffer.getvalue()).decode()
 
-        # PDF
+        # Generar PDF
         pdf_buffer = BytesIO()
         c = canvas.Canvas(pdf_buffer, pagesize=A4)
         width, height = A4
 
-        # Marca de agua
+        # Marca de agua (si existe)
         watermark_path = os.path.join("public", "logo_union.png")
         if os.path.exists(watermark_path):
-            img = ImageReader(watermark_path)
-            c.saveState()
-            c.translate(width / 4, height / 4)
-            c.rotate(30)
-            c.setFillAlpha(0.1)
-            c.drawImage(img, 0, 0, width=width / 2, height=width / 2)
-            c.restoreState()
+            try:
+                img = ImageReader(watermark_path)
+                c.saveState()
+                c.translate(width / 4, height / 4)
+                c.rotate(30)
+                c.setFillAlpha(0.1)
+                c.drawImage(img, 0, 0, width=width / 2, height=width / 2)
+                c.restoreState()
+            except:
+                pass
 
-        # Logo
+        # Logo (si existe)
         logo_path = os.path.join("public", "logo.png")
         if os.path.exists(logo_path):
-            c.drawImage(logo_path, 250, height - 100, width=100)
+            try:
+                c.drawImage(logo_path, 250, height - 100, width=100)
+            except:
+                pass
 
         # Datos empresa
         c.setFont("Helvetica-Bold", 14)
@@ -87,7 +95,7 @@ def generar():
         c.drawString(40, height - 80, empresa["direccion"])
         c.drawString(40, height - 95, empresa["email"])
 
-        # Cliente
+        # Datos cliente
         c.setFont("Helvetica", 12)
         c.drawString(400, height - 50, cliente)
         c.drawString(400, height - 65, f"CUIT: {cuit_cliente}")
@@ -108,13 +116,18 @@ def generar():
 
         c.setFont("Helvetica", 10)
         for item in items:
-            cantidad = item["cantidad"]
-            descripcion = item["descripcion"]
-            precio = float(item["precio"])
-            precio_total = cantidad * precio
+            cantidad = item.get("cantidad", "0")
+            descripcion = item.get("descripcion", "")
+            precio = item.get("precio", "0")
+            try:
+                precio_f = float(precio)
+                cantidad_f = int(cantidad)
+                precio_total = cantidad_f * precio_f
+            except:
+                precio_total = 0
             c.drawString(40, y, str(cantidad))
             c.drawString(120, y, descripcion[:30])
-            c.drawString(320, y, f"${precio:,.2f}")
+            c.drawString(320, y, f"${precio_f:,.2f}")
             c.drawString(420, y, f"${precio_total:,.2f}")
             y -= 15
 
