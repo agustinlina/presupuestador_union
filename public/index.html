@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Presupuestos</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Generador de Presupuestos</h1>
+    </header>
+    <main>
+        <form id="presupuestoForm">
+            <label>Nombre del Cliente</label>
+            <input type="text" id="cliente" value="Nombre del cliente" required>
+            <label>CUIT Cliente</label>
+            <input type="text" id="cuitCliente" value="20-00000000-0" required>
+            <label>Fecha de Emisión</label>
+            <input type="date" id="fecha" required>
+            <label>Condiciones de Pago</label>
+            <textarea id="condiciones" rows="3">A convenir</textarea>
+            <h3>Productos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cantidad</th>
+                        <th>Descripción</th>
+                        <th>Precio Unitario</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="itemsBody"></tbody>
+            </table>
+            <button type="button" id="agregarFila">Agregar Producto</button>
+            <button type="submit">Generar Presupuesto</button>
+        </form>
+        <div id="resultados" style="margin-top: 20px;"></div>
+    </main>
+    <script src="script.js" defer></script>
+</body>
+</html>

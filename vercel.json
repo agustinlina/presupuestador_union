@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/generar.py", "use": "@vercel/python" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/generar", "dest": "/api/generar.py" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ]
+}
